@@ -1,9 +1,7 @@
-import 'package:duanju_app/app_build.dart';
-import 'package:duanju_app/detail_screen.dart';
-import 'package:duanju_app/home_screen.dart';
 import 'package:duanju_app/local_store.dart';
 import 'package:duanju_app/main.dart';
 import 'package:duanju_app/models.dart';
+import 'package:duanju_app/app_build.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,15 +45,7 @@ void main() {
         expect(find.text('黄豆'), findsNothing);
       }
       expect(find.text('会员测试剧'), findsNothing);
-      await Navigator.of(tester.element(find.byType(HomeScreen))).push(
-        MaterialPageRoute<void>(
-          builder: (_) => DetailScreen(
-            drama: FixtureRepository.free,
-            repository: repository,
-            store: local,
-          ),
-        ),
-      );
+      await tester.tap(find.text('测试短剧'));
       await tester.pumpAndSettle();
       expect(repository.detailCalls, 1);
       expect(find.byKey(const ValueKey('episode-2')), findsOneWidget);

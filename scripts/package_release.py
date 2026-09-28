@@ -42,6 +42,15 @@ else:
     required = ['zhenguojian.exe', 'duanju_core.dll', 'flutter_windows.dll', 'libffmpegkit.dll',
                 'libmpv-2.dll', 'msvcp140.dll', 'vcruntime140.dll',
                 'data/icudtl.dat', 'data/app.so']
+    core_dll = root / 'windows' / 'runner' / 'duanju_core.dll'
+    if not (bundle / 'duanju_core.dll').is_file() and core_dll.is_file():
+        shutil.copy2(core_dll, bundle / 'duanju_core.dll')
+    for dll in ['msvcp140.dll', 'vcruntime140.dll']:
+        target_dll = bundle / dll
+        if not target_dll.is_file():
+            system_dll = Path(os.environ.get('WINDIR', r'C:\Windows')) / 'System32' / dll
+            if system_dll.is_file():
+                shutil.copy2(system_dll, target_dll)
     missing = [name for name in required if not (bundle / name).is_file()]
     if missing:
         raise SystemExit('Windows 安装包缺少文件：' + ', '.join(missing))
