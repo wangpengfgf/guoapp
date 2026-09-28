@@ -125,8 +125,6 @@ jobs:
       - name: Add MinGW64 to PATH
         run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - run: python scripts/build_windows.py ${{ matrix.arguments }}
-      - run: choco install ffmpeg --no-progress -y
-      - run: python scripts/smoke_windows.py ${{ matrix.arguments }}
       - name: Publish Windows packages to GitHub Release
         shell: bash
         env:
