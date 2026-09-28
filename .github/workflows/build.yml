@@ -86,7 +86,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(python3 -c "import re, pathlib; print(re.search(r'^version:\s*(\S+)', pathlib.Path('pubspec.yaml').read_text(), re.M).group(1).split('+')[0])")
+          VERSION=$(python3 -c "import re, pathlib; print(re.search(r'^version:\s*(\S+)', pathlib.Path('pubspec.yaml').read_text(encoding='utf-8'), re.M).group(1).split('+')[0])")
           TAG="v${VERSION}"
           gh release create "$TAG" --title "真果鉴 / 红果鉴 $TAG" --notes "真果鉴（全站源版）与红果鉴（单站源版）多端独立短剧应用安装包" || true
           gh release upload "$TAG" dist/android/* --clobber
@@ -130,7 +130,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(python -c "import re, pathlib; print(re.search(r'^version:\s*(\S+)', pathlib.Path('pubspec.yaml').read_text(), re.M).group(1).split('+')[0])")
+          VERSION=$(python -c "import re, pathlib; print(re.search(r'^version:\s*(\S+)', pathlib.Path('pubspec.yaml').read_text(encoding='utf-8'), re.M).group(1).split('+')[0])")
           TAG="v${VERSION}"
           gh release create "$TAG" --title "真果鉴 / 红果鉴 $TAG" --notes "真果鉴（全站源版）与红果鉴（单站源版）多端独立短剧应用安装包" || true
           gh release upload "$TAG" dist/windows/* --clobber
@@ -172,7 +172,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(python3 -c "import re, pathlib; print(re.search(r'^version:\s*(\S+)', pathlib.Path('pubspec.yaml').read_text(), re.M).group(1).split('+')[0])")
+          VERSION=$(python3 -c "import re, pathlib; print(re.search(r'^version:\s*(\S+)', pathlib.Path('pubspec.yaml').read_text(encoding='utf-8'), re.M).group(1).split('+')[0])")
           TAG="v${VERSION}"
           gh release create "$TAG" --title "真果鉴 / 红果鉴 $TAG" --notes "真果鉴（全站源版）与红果鉴（单站源版）多端独立短剧应用安装包" || true
           gh release upload "$TAG" dist/ios/* --clobber
