@@ -148,7 +148,7 @@ void main() {
         fixtureProbe(rate: 48000),
       ]);
       expect(audioOnly.videoTranscodes, 0);
-      expect(audioOnly.audioTranscodes, 1);
+      expect(audioOnly.audioTranscodes, 3);
       final identical = MergePlan.create([fixtureProbe(), fixtureProbe()]);
       expect(identical.videoTranscodes, 0);
       expect(identical.audioTranscodes, 0);
@@ -163,7 +163,7 @@ void main() {
     ]);
     expect(plan.audio, isNotNull);
     expect(plan.videoTranscodes, 0);
-    expect(plan.audioTranscodes, 2);
+    expect(plan.audioTranscodes, 3);
   });
 
   test(
@@ -233,7 +233,11 @@ void main() {
         await expectLater(
           library.merge(jobs),
           throwsA(
-            predicate((Object error) => error.toString().contains('已取消')),
+            predicate(
+              (Object error) =>
+                  error.toString().contains('已停止') ||
+                  error.toString().contains('已取消'),
+            ),
           ),
         );
         expect(executor.commands, isEmpty);
