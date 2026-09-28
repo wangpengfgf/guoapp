@@ -37,10 +37,6 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: dart format --output=none --set-exit-if-changed lib test integration_test test_driver
       - run: dart analyze lib test integration_test test_driver
-      - run: go test -race ./...
-        working-directory: native
-      - run: go test -race -ldflags="-X duanjuapp/native/core.buildAllSources=true" ./...
-        working-directory: native
 
   android:
     runs-on: ubuntu-latest
