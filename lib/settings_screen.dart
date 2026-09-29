@@ -8,10 +8,11 @@ import 'package:path_provider/path_provider.dart';
 
 import 'core_bridge.dart';
 import 'app_theme.dart';
+import 'app_layout.dart';
 import 'background_downloads.dart';
 import 'local_store.dart';
 import 'profiles_screen.dart';
-import 'app_build.dart';
+import 'remote_widgets.dart';
 import 'sources_screen.dart';
 import 'widgets.dart';
 import 'resource_settings_screen.dart';
@@ -39,10 +40,35 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final _listKey = GlobalKey<RemoteListState>();
   bool _busy = false;
   String? _message;
 
   Future<void> _chooseTheme() async {
+    if (AppLayout.isTelevision(context)) {
+      final selected = await showDialog<String>(
+        context: context,
+        builder: (_) => TelevisionActionDialog(
+          title: '外观主题',
+          options: [
+            for (final mode in ['light', 'dark', 'system'])
+              TelevisionAction(
+                value: mode,
+                label: AppTheme.label(mode),
+                description: mode == 'system' ? '随设备的深色模式自动切换' : null,
+                icon: Icons.brightness_6_rounded,
+              ),
+          ],
+        ),
+      );
+      if (selected != null && mounted) {
+        await saveUserChange(
+          context,
+          () => widget.store.setThemeMode(selected),
+        );
+      }
+      return;
+    }
     final selected = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
@@ -101,26 +127,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final content = utf8.decode(await file.readAsBytes());
         final data = widget.store.validateBackup(content);
         if (!mounted) return;
-        final accepted = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('恢复备份？'),
-            content: Text(
-              '包含 ${(data['profiles'] as List).length} 个用户。将替换本机的用户、追剧、观看记录和偏好设置；已下载视频保留。恢复后使用备份内的管理员密码登录。',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('恢复'),
-              ),
-            ],
-          ),
-        );
-        if (accepted != true || !mounted) return;
+        final summary =
+            '包含 ${(data['profiles'] as List).length} 个用户。将替换本机的用户、追剧、观看记录和偏好设置；已下载视频保留。恢复后使用备份内的管理员密码登录。';
+        final bool accepted;
+        if (AppLayout.isTelevision(context)) {
+          accepted =
+              await showDialog<String>(
+                context: context,
+                builder: (_) => TelevisionActionDialog(
+                  title: '恢复备份？',
+                  options: [
+                    TelevisionAction(
+                      value: 'restore',
+                      label: '恢复这套备份',
+                      description: summary,
+                      icon: Icons.restore_rounded,
+                    ),
+                  ],
+                ),
+              ) ==
+              'restore';
+        } else {
+          accepted =
+              await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('恢复备份？'),
+                  content: Text(summary),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('取消'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('恢复'),
+                    ),
+                  ],
+                ),
+              ) ??
+              false;
+        }
+        if (!accepted || !mounted) return;
         await widget.store.importBackup(content);
         if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -131,6 +179,146 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _toggleAutoExport() async {
+    try {
+      if (!widget.store.autoExport) {
+        await BackgroundDownloads.ensureStarted();
+      }
+      await widget.store.setAutoExport(!widget.store.autoExport);
+    } catch (error) {
+      if (mounted) setState(() => _message = error.toString());
+    }
+  }
+
+  Future<void> _toggleExportPosters() => saveUserChange(
+    context,
+    () => widget.store.setExportPosters(!widget.store.exportPosters),
+  );
+
+  List<({String id, IconData icon, String title, String subtitle, VoidCallback? onPressed})>
+  _televisionEntries() => [
+    (
+      id: 'lan',
+      icon: Icons.devices_rounded,
+      title: '设备互联',
+      subtitle: '局域网自动同步追剧与推送播放',
+      onPressed: () => openLanSync(context),
+    ),
+    if (widget.repository.supportsSourceManagement)
+      (
+        id: 'sources',
+        icon: Icons.dns_outlined,
+        title: '站源管理',
+        subtitle: '独立更新、连接与播放检测',
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => SourcesScreen(
+              repository: widget.repository,
+              store: widget.store,
+            ),
+          ),
+        ),
+      ),
+    (
+      id: 'theme',
+      icon: Icons.palette_outlined,
+      title: '外观主题',
+      subtitle: AppTheme.label(widget.store.themeMode),
+      onPressed: _chooseTheme,
+    ),
+    (
+      id: 'profiles',
+      icon: Icons.people_outline,
+      title: '用户管理',
+      subtitle: '当前：${widget.store.profile.name}',
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => ProfilesScreen(store: widget.store),
+        ),
+      ),
+    ),
+    if (widget.store.canDownload)
+      (
+        id: 'download-preferences',
+        icon: Icons.download_outlined,
+        title: '下载偏好',
+        subtitle: widget.store.downloadPreferences.qualityLabel,
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => DownloadPreferencesScreen(store: widget.store),
+          ),
+        ),
+      ),
+    if (widget.store.canDownload)
+      (
+        id: 'storage',
+        icon: Icons.folder_outlined,
+        title: '下载目录与空间',
+        subtitle: '查看存储用量、迁移已下载文件',
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => StorageScreen(
+              repository: widget.repository,
+              store: widget.store,
+            ),
+          ),
+        ),
+      ),
+    if (widget.store.profile.admin) ...[
+      (
+        id: 'resources',
+        icon: Icons.settings_ethernet_rounded,
+        title: '网络与资源',
+        subtitle: '代理、目录请求间隔、下载并发与站源目录',
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => ResourceSettingsScreen(
+              repository: widget.repository,
+              store: widget.store,
+            ),
+          ),
+        ),
+      ),
+      (
+        id: 'auto-export',
+        icon: Icons.movie_filter_outlined,
+        title: '自动导出 Emby',
+        subtitle: widget.store.autoExport
+            ? '已开启 · 在 exports 目录生成视频与海报元数据'
+            : '已关闭 · 按确认开启',
+        onPressed: _busy ? null : _toggleAutoExport,
+      ),
+      (
+        id: 'export-posters',
+        icon: Icons.image_outlined,
+        title: '导出海报文件',
+        subtitle: widget.store.exportPosters
+            ? '已开启 · 同时写入海报文件'
+            : '已关闭 · 只写海报 URL',
+        onPressed: _busy ? null : _toggleExportPosters,
+      ),
+      (
+        id: 'backup',
+        icon: Icons.backup_outlined,
+        title: '导出配置备份',
+        subtitle: '包含本地用户、追剧、历史和设置，不含视频文件',
+        onPressed: _busy ? null : () => _backup(false),
+      ),
+      (
+        id: 'restore',
+        icon: Icons.restore,
+        title: '恢复配置备份',
+        subtitle: '从备份文件恢复用户与设置',
+        onPressed: _busy ? null : () => _backup(true),
+      ),
+    ],
+  ];
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.store,
@@ -139,7 +327,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView(
+          child: AppLayout.isTelevision(context)
+              ? Builder(
+                  builder: (_) {
+                    final entries = _televisionEntries();
+                    return RemoteList(
+                      key: _listKey,
+                      itemKeys: [for (final entry in entries) entry.id],
+                      itemExtent: RemoteListTile.extent,
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                      autofocus: true,
+                      itemBuilder: (_, index, node, onFocus) => RemoteListTile(
+                        title: entries[index].title,
+                        subtitle: entries[index].subtitle,
+                        leading: Icon(entries[index].icon, size: 26),
+                        focusNode: node,
+                        onFocus: onFocus,
+                        onPressed: entries[index].onPressed,
+                      ),
+                    );
+                  },
+                )
+              : ListView(
             padding: const EdgeInsets.all(16),
             children: [
               ListTile(

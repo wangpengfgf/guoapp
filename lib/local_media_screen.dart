@@ -9,6 +9,7 @@ import 'local_store.dart';
 import 'media_library.dart';
 import 'models.dart';
 import 'player_screen.dart';
+import 'remote_widgets.dart';
 import 'settings_screen.dart';
 import 'merge_queue_screen.dart';
 
@@ -34,6 +35,7 @@ class _LocalMediaScreenState extends State<LocalMediaScreen> {
   @override
   void initState() {
     super.initState();
+    ensureTelevisionFocus(context);
     _refresh();
   }
 

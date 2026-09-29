@@ -47,6 +47,7 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _episodesExpanded = false;
   final _episodeAnchor = GlobalKey();
   final _detailScroll = ScrollController();
+  final _playFocus = FocusNode(debugLabel: 'tv-detail-play');
   bool _initialActionHandled = false;
   late final int _profileEpoch;
   Widget? get _sourceDiagnostics => widget.repository.supportsSourceManagement
@@ -77,6 +78,7 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void dispose() {
     _detailScroll.dispose();
+    _playFocus.dispose();
     widget.store.removeListener(_onStoreChanged);
     _generation++;
     super.dispose();
@@ -381,6 +383,8 @@ class _DetailScreenState extends State<DetailScreen> {
                                       child: EpisodeBrowser(
                                         episodes: episodes,
                                         currentNumber: watched?.episode,
+                                        onExitDown: () =>
+                                            _playFocus.requestFocus(),
                                         onSelected: (index) => _play(index),
                                       ),
                                     ),
@@ -503,6 +507,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         child: FilledButton.icon(
                           key: const ValueKey('start-play'),
                           autofocus: television,
+                          focusNode: television ? _playFocus : null,
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, 52),
                             padding: const EdgeInsets.symmetric(

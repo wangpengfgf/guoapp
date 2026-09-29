@@ -8,6 +8,7 @@ import 'local_profiles.dart';
 import 'local_store.dart';
 import 'models.dart';
 import 'app_build.dart';
+import 'remote_widgets.dart';
 
 class ProfilesScreen extends StatefulWidget {
   const ProfilesScreen({super.key, required this.store, this.locked = false});
@@ -20,6 +21,12 @@ class ProfilesScreen extends StatefulWidget {
 class _ProfilesScreenState extends State<ProfilesScreen> {
   bool _busy = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    ensureTelevisionFocus(context);
+  }
 
   Future<void> _recover({bool export = false, bool reload = false}) async {
     setState(() {

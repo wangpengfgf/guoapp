@@ -8,7 +8,18 @@ class SourceSite {
   final String name;
   final String description;
   bool get onlineSearch => id == 'hongguo' || pagedSearch;
-  bool get pagedSearch => id == 'huangju' || id == 'yeguo' || id == 'dsd';
+  bool get pagedSearch =>
+      id == 'huangju' || id == 'yeguo' || id == 'dsd' || duanjuPaged;
+  bool get duanjuPaged => const {
+    'yaguo',
+    'guanguo',
+    'huaguo',
+    'niuguo',
+    'wangguo',
+    'faguo',
+    'piguo',
+    'wuguo',
+  }.contains(id);
   bool get searchSuggestions => id == 'hongguo';
   String get groupId => switch (id) {
     'huangguo-video' || 'huangguoai' || 'cloudfront' => 'huangguo',
@@ -24,6 +35,20 @@ class SourceSite {
 
   static const hongguo = SourceSite('hongguo', '红果', '短剧 · 漫剧 · AI 剧');
   static const dsd = SourceSite('dsd', '帝果', '分类视频 · 在线搜索');
+  static const duanjuValues = [
+    SourceSite('yaguo', '芽果', '星芽短剧 · 登录接口'),
+    SourceSite('maoguo', '猫果', '七猫短剧 · 签名接口'),
+    SourceSite('fanguo', '饭果', '西饭短剧 · 搜索接口'),
+    SourceSite('guanguo', '观果', '围观短剧 · 分类接口'),
+    SourceSite('heguo', '河果', '河马剧场 · 网页接口'),
+    SourceSite('xingguo', '星果', '星星短剧 · 连载接口'),
+    SourceSite('huaguo', '花果', '花生短剧 · 网页目录'),
+    SourceSite('niuguo', '牛果', '牛牛短剧 · 分类接口'),
+    SourceSite('wangguo', '网果', '短剧网站 · 网页目录'),
+    SourceSite('faguo', '发果', '168 短剧 · 网页目录'),
+    SourceSite('piguo', '皮果', 'PTT 短剧 · 网页目录'),
+    SourceSite('wuguo', '伍果', '五五短剧 · 网页目录'),
+  ];
   static const knownValues = [
     hongguo,
     SourceSite('huangdou', '黄豆', '精选短剧'),
@@ -33,6 +58,7 @@ class SourceSite {
     SourceSite('huangguo-video', '黄果视频', '视频剧集'),
     SourceSite('huangguoai', '黄果 AI', 'AI 短剧'),
     SourceSite('cloudfront', '黄果旧版', '旧 API 剧库'),
+    ...duanjuValues,
   ];
   static const allValues = [
     hongguo,
@@ -43,6 +69,7 @@ class SourceSite {
     SourceSite('huangguo-video', '黄果视频', '视频剧集'),
     SourceSite('huangguoai', '黄果 AI', 'AI 短剧'),
     SourceSite('cloudfront', '黄果旧版', '旧 API 剧库'),
+    ...duanjuValues,
   ];
   static const values = allSourcesEnabled ? knownValues : [hongguo];
   static bool isAvailable(String id) => values.any((site) => site.id == id);

@@ -68,6 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _selectionMode = false;
   bool _showRecommendations = false;
   bool _catalogLoadScheduled = false;
+  final _filtersKey = GlobalKey<RemoteRowState>();
+  final _gridKey = GlobalKey<RemoteGridState>();
+  final _navKey = GlobalKey<RemoteListState>();
+  final _appBarFocus = FocusNode(debugLabel: 'tv-appbar');
+  final _selectionFocus = FocusNode(debugLabel: 'tv-selection');
 
   List<SourceGroup> get _sourceGroups {
     final groups = SourceGroup.fromSources(widget.store.sources);
@@ -425,6 +430,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _search.dispose();
     _scroll.removeListener(_onCatalogScroll);
     _scroll.dispose();
+    _appBarFocus.dispose();
+    _selectionFocus.dispose();
     super.dispose();
   }
 
@@ -764,6 +771,12 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, constraints) {
         final television = AppLayout.isTelevision(context);
         final desktop = constraints.maxWidth >= 840;
+        final navEntries = <(int, IconData, String)>[
+          (0, Icons.explore_rounded, '发现'),
+          (1, Icons.bookmark_rounded, '追剧'),
+          (2, Icons.history_rounded, '最近观看'),
+          if (widget.store.canDownload) (3, Icons.download_rounded, '下载'),
+        ];
         final scaffold = Scaffold(
           appBar: AppBar(
             toolbarHeight: television ? 64 : null,
@@ -825,6 +838,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 TextButton(
                   key: const ValueKey('cancel-catalog-selection'),
+                  focusNode: _appBarFocus,
                   onPressed: _cancelSelection,
                   child: const Text('取消'),
                 ),
@@ -975,31 +989,33 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 if (television) ...[
                   SizedBox(
-                    width: 164,
+                    width: 176,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(8, 24, 8, 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final entry in [
-                            (Icons.explore_rounded, '发现'),
-                            (Icons.bookmark_rounded, '追剧'),
-                            (Icons.history_rounded, '最近观看'),
-                            if (widget.store.canDownload)
-                              (Icons.download_rounded, '下载'),
-                          ].indexed)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: RemoteButton(
-                                key: ValueKey('tv-nav-${entry.$1}'),
-                                label: entry.$2.$2,
-                                icon: entry.$2.$1,
-                                selected: _tab == entry.$1,
-                                autofocus: entry.$1 == 0,
-                                onPressed: () => _changeTab(entry.$1),
-                              ),
-                            ),
+                      child: RemoteList(
+                        key: _navKey,
+                        itemKeys: [
+                          for (final entry in navEntries) '${entry.$1}',
                         ],
+                        itemExtent: 60,
+                        spacing: 14,
+                        padding: EdgeInsets.zero,
+                        autofocus: true,
+                        onExitRight: _tab == 0
+                            ? () => _gridKey.currentState?.focusCurrent()
+                            : null,
+                        itemBuilder: (_, index, node, onFocus) {
+                          final entry = navEntries[index];
+                          return RemoteButton(
+                            key: ValueKey('tv-nav-${entry.$1}'),
+                            label: entry.$3,
+                            icon: entry.$2,
+                            selected: _tab == entry.$1,
+                            focusNode: node,
+                            onFocus: onFocus,
+                            onPressed: () => _changeTab(entry.$1),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -1054,6 +1070,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           repository: widget.repository,
                           store: widget.store,
                           history: _tab == 2,
+                          remoteAutofocus: television,
+                          onExitLeft: television
+                              ? () => _navKey.currentState?.focusCurrent()
+                              : null,
                           onOpen: _openDrama,
                           onContinue: (drama) =>
                               _openDrama(drama, resume: true),
@@ -1183,6 +1203,13 @@ class _HomeScreenState extends State<HomeScreen> {
           categories: _displayCategories,
           category: _displayCategory,
           error: _categoriesError,
+          remoteKey: _filtersKey,
+          onExitUp: television && _selectionMode
+              ? () => _appBarFocus.requestFocus()
+              : null,
+          onExitDown: television
+              ? () => _gridKey.currentState?.focusCurrent()
+              : null,
           onCategory: _changeCategory,
           onRetry: () => _loadCategories(force: true),
           trailing: Row(
@@ -1208,6 +1235,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 repository: widget.repository,
                 store: widget.store,
                 embedded: true,
+                gridKey: _gridKey,
+                onExitLeft: television
+                    ? () => _navKey.currentState?.focusCurrent()
+                    : null,
               ),
             ),
           )
@@ -1268,8 +1299,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           return _televisionGrid(
                             items,
                             constraints.maxWidth,
-                            key:
-                                'catalog-${_group.id}-$_category-$_submittedQuery',
                             controller: _scroll,
                             footer: Padding(
                               padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
@@ -1398,6 +1427,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
               final next = FilledButton(
                 key: const ValueKey('download-selected-dramas'),
+                focusNode: _selectionFocus,
                 onPressed: count == 0 ? null : _downloadSelected,
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(96, 48),
@@ -1433,20 +1463,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _televisionGrid(
     List<Drama> items,
     double width, {
-    required String key,
     ScrollController? controller,
     Widget? footer,
   }) {
     final columns = ((width - 36) / 150).floor().clamp(1, 8);
     final tileWidth = (width - 36 - (columns - 1) * 14) / columns;
     return RemoteGrid(
-      key: ValueKey('tv-grid-$key'),
+      key: _gridKey,
       itemKeys: items.map((item) => item.id).toList(),
       columns: columns,
       itemExtent: DramaTile.extentFor(context, tileWidth - 14) + 14,
       controller: controller,
       footer: footer,
       padding: const EdgeInsets.fromLTRB(18, 2, 18, 18),
+      onExitUp: () => _filtersKey.currentState?.focusCurrent(),
+      onExitLeft: () => _navKey.currentState?.focusCurrent(),
+      onExitDown: _selectionMode ? () => _selectionFocus.requestFocus() : null,
       itemBuilder: (_, index, node, onFocus) =>
           _catalogTile(items[index], focusNode: node, onFocus: onFocus),
     );

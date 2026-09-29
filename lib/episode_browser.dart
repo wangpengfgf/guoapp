@@ -155,6 +155,8 @@ class EpisodeBrowser extends StatefulWidget {
     this.keyPrefix = 'episode',
     this.title = '选集',
     this.compact = false,
+    this.onExitUp,
+    this.onExitDown,
   });
   final List<Episode> episodes;
   final ValueChanged<int> onSelected;
@@ -163,6 +165,8 @@ class EpisodeBrowser extends StatefulWidget {
   final String keyPrefix;
   final String title;
   final bool compact;
+  final VoidCallback? onExitUp;
+  final VoidCallback? onExitDown;
   @override
   State<EpisodeBrowser> createState() => _EpisodeBrowserState();
 }
@@ -281,6 +285,8 @@ class _EpisodeBrowserState extends State<EpisodeBrowser> {
                 controller: _scroll,
                 autofocus: television && _located != null,
                 initialIndex: target,
+                onExitUp: widget.onExitUp,
+                onExitDown: widget.onExitDown,
                 itemKeys: visible
                     .map((episode) => '${episode.number}')
                     .toList(),

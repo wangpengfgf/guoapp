@@ -4,6 +4,7 @@ import 'core_bridge.dart';
 import 'download_preferences.dart';
 import 'local_store.dart';
 import 'resource_settings.dart';
+import 'remote_widgets.dart';
 import 'widgets.dart';
 
 class DownloadPreferencesScreen extends StatelessWidget {
@@ -104,6 +105,7 @@ class _ResourceSettingsScreenState extends State<ResourceSettingsScreen> {
   @override
   void initState() {
     super.initState();
+    ensureTelevisionFocus(context);
     _load();
   }
 

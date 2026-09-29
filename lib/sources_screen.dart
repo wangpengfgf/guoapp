@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'core_bridge.dart';
 import 'local_store.dart';
 import 'models.dart';
+import 'remote_widgets.dart';
 import 'source_status.dart';
 
 String sourceTimestamp(DateTime? value) {
@@ -46,6 +47,7 @@ class _SourcesScreenState extends State<SourcesScreen> {
   @override
   void initState() {
     super.initState();
+    ensureTelevisionFocus(context);
     unawaited(_refresh());
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _ticks++;

@@ -64,6 +64,9 @@ func validNativeCategory(source, category string) bool {
 	case sourceDSD:
 		return webProviderNumericID.MatchString(category)
 	}
+	if isDuanjuProviderSource(source) {
+		return validDuanjuCategory(source, category)
+	}
 	return false
 }
 
@@ -124,6 +127,14 @@ func (engine *nativeEngine) nativeCategories(ctx context.Context, source string,
 			all = append(all, categories...)
 		}
 	default:
+		if isDuanjuProviderSource(source) {
+			var categories []nativeCategory
+			categories, err = d.fetchDuanjuCategories(ctx, source)
+			if err == nil {
+				all = append(all, categories...)
+			}
+			break
+		}
 		return nil, errors.New("请选择有效站源")
 	}
 	if err != nil {

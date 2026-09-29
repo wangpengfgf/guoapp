@@ -6,6 +6,7 @@ import 'core_bridge.dart';
 import 'local_store.dart';
 import 'media_library.dart';
 import 'models.dart';
+import 'remote_widgets.dart';
 import 'widgets.dart';
 
 class MergeQueueScreen extends StatefulWidget {
@@ -33,6 +34,7 @@ class _MergeQueueScreenState extends State<MergeQueueScreen> {
   @override
   void initState() {
     super.initState();
+    ensureTelevisionFocus(context);
     _load();
   }
 

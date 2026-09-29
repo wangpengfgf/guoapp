@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_layout.dart';
 import 'catalog_sort.dart';
 
 Future<CatalogView?> chooseCatalogView(
@@ -32,6 +33,9 @@ Future<CatalogView?> chooseCatalogView(
               children: [
                 for (final sort in CatalogSort.values)
                   ChoiceChip(
+                    autofocus:
+                        AppLayout.isTelevision(context) &&
+                        sort == CatalogSort.values.first,
                     label: Text(sort.label),
                     selected: selected.sort == sort,
                     onSelected: (_) =>

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'lan_controller.dart';
 import 'local_store.dart';
+import 'remote_widgets.dart';
 import 'widgets.dart';
 
 IconData lanDeviceIcon(String kind) => switch (kind) {
@@ -97,6 +98,12 @@ class _LanSyncScreenState extends State<LanSyncScreen> {
   bool _cancelling = false;
   String? _error;
   LanController get link => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    ensureTelevisionFocus(context);
+  }
 
   Future<void> _perform(Future<void> Function() action) async {
     if (_busy) return;

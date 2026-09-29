@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'app_layout.dart';
 import 'catalog_filters.dart';
 import 'core_bridge.dart';
 import 'detail_screen.dart';
 import 'local_store.dart';
 import 'models.dart';
 import 'ranking_models.dart';
+import 'remote_widgets.dart';
 import 'widgets.dart';
 
 class RankingsScreen extends StatefulWidget {
@@ -25,6 +27,8 @@ class RankingsScreen extends StatefulWidget {
 
 class _RankingsScreenState extends State<RankingsScreen> {
   final _scroll = ScrollController();
+  final _boardsKey = GlobalKey<RemoteRowState>();
+  final _listKey = GlobalKey<RemoteListState>();
   List<RankingBoard> _boards = [];
   RankingBoard? _board;
   List<RankingItem> _items = [];
@@ -158,6 +162,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final television = AppLayout.isTelevision(context);
     final groups = SourceGroup.fromSources(
       _boards.map((board) => SourceSite.byId(board.source)).toSet(),
     );
@@ -223,6 +228,11 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     CatalogCategory(board.id, board.name),
                 ],
                 category: _board!.id,
+                remoteKey: _boardsKey,
+                remoteAutofocus: television,
+                onExitDown: television
+                    ? () => _listKey.currentState?.focusCurrent()
+                    : null,
                 onCategory: (id) =>
                     _select(boards.firstWhere((board) => board.id == id)),
                 onRetry: () => _load(force: true),
@@ -287,6 +297,23 @@ class _RankingsScreenState extends State<RankingsScreen> {
                           ? _initialize
                           : () => _load(force: true),
                     )
+                  : television
+                  ? RemoteList(
+                      key: _listKey,
+                      itemKeys: [
+                        for (final item in items)
+                          '${item.rank}-${item.drama.id}',
+                      ],
+                      itemExtent: 140,
+                      spacing: 10,
+                      controller: _scroll,
+                      onExitUp: () => _boardsKey.currentState?.focusCurrent(),
+                      itemBuilder: (_, index, node, onFocus) => _rankTile(
+                        items[index],
+                        focusNode: node,
+                        onFocus: onFocus,
+                      ),
+                    )
                   : RefreshIndicator(
                       onRefresh: () => _load(force: true),
                       child: ListView.builder(
@@ -314,104 +341,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                     ),
                             );
                           }
-                          final item = items[index];
-                          return Card(
-                            child: InkWell(
-                              key: ValueKey(
-                                'rank-${item.rank}-${item.drama.id}',
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              onFocusChange: (focused) {
-                                if (focused) {
-                                  Scrollable.ensureVisible(
-                                    context,
-                                    alignment: .4,
-                                  );
-                                }
-                              },
-                              onTap: () => Navigator.push<void>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => DetailScreen(
-                                    drama: item.drama,
-                                    repository: widget.repository,
-                                    store: widget.store,
-                                  ),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 36,
-                                      child: Text(
-                                        '${item.rank}',
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w800,
-                                          color: item.rank <= 3
-                                              ? Theme.of(
-                                                  context,
-                                                ).colorScheme.primary
-                                              : Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 72,
-                                      height: 108,
-                                      child: DramaCover(
-                                        drama: item.drama,
-                                        repository: widget.repository,
-                                        radius: 8,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.drama.title,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleMedium,
-                                          ),
-                                          if (item.drama.category.isNotEmpty)
-                                            Text(
-                                              item.drama.category,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          if (item.metric.isNotEmpty)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8,
-                                              ),
-                                              child: Text(
-                                                item.metric,
-                                                style: TextStyle(
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(Icons.chevron_right_rounded),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
+                          return _rankTile(items[index]);
                         },
                       ),
                     ),
@@ -419,6 +349,112 @@ class _RankingsScreenState extends State<RankingsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _rankTile(
+    RankingItem item, {
+    FocusNode? focusNode,
+    VoidCallback? onFocus,
+  }) {
+    final theme = Theme.of(context);
+    void open() => Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailScreen(
+          drama: item.drama,
+          repository: widget.repository,
+          store: widget.store,
+        ),
+      ),
+    );
+    final body = Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 36,
+            child: Text(
+              '${item.rank}',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: item.rank <= 3
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 72,
+            height: 108,
+            child: DramaCover(
+              drama: item.drama,
+              repository: widget.repository,
+              radius: 8,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.drama.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium,
+                ),
+                if (item.drama.category.isNotEmpty)
+                  Text(
+                    item.drama.category,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                if (item.metric.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      item.metric,
+                      style: TextStyle(color: theme.colorScheme.primary),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded),
+        ],
+      ),
+    );
+    if (focusNode == null && onFocus == null) {
+      return Builder(
+        builder: (itemContext) => Card(
+          child: InkWell(
+            key: ValueKey('rank-${item.rank}-${item.drama.id}'),
+            borderRadius: BorderRadius.circular(12),
+            onFocusChange: (focused) {
+              if (focused) {
+                Scrollable.ensureVisible(itemContext, alignment: .4);
+              }
+            },
+            onTap: open,
+            child: body,
+          ),
+        ),
+      );
+    }
+    return RemoteTarget(
+      key: ValueKey('rank-${item.rank}-${item.drama.id}'),
+      focusNode: focusNode,
+      onFocus: onFocus,
+      outlined: true,
+      borderWidth: 2,
+      radius: 12,
+      padding: EdgeInsets.zero,
+      onPressed: open,
+      label:
+          '第 ${item.rank} 名，${item.drama.title}${item.metric.isEmpty ? '' : '，${item.metric}'}',
+      child: Card(margin: EdgeInsets.zero, child: body),
     );
   }
 }

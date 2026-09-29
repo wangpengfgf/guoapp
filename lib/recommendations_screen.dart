@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'catalog_filters.dart';
+import 'app_layout.dart';
 import 'core_bridge.dart';
 import 'local_store.dart';
 import 'models.dart';
 import 'playback_launch_screen.dart';
+import 'remote_widgets.dart';
 import 'widgets.dart';
 
 class RecommendationsScreen extends StatefulWidget {
@@ -15,10 +17,14 @@ class RecommendationsScreen extends StatefulWidget {
     required this.repository,
     required this.store,
     this.embedded = false,
+    this.gridKey,
+    this.onExitLeft,
   });
   final AppRepository repository;
   final LocalStore store;
   final bool embedded;
+  final GlobalKey<RemoteGridState>? gridKey;
+  final VoidCallback? onExitLeft;
 
   @override
   State<RecommendationsScreen> createState() => _RecommendationsScreenState();
@@ -126,6 +132,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
           category: _genre,
           onCategory: _select,
           onRetry: () => _load(force: true),
+          onExitDown: () => widget.gridKey?.currentState?.focusCurrent(),
           trailing: widget.embedded ? refresh : null,
         ),
         Padding(
@@ -174,7 +181,62 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                   onRetry: () => _load(force: true),
                 )
               : LayoutBuilder(
-                  builder: (context, constraints) => RefreshIndicator(
+                  builder: (context, constraints) {
+                    if (AppLayout.isTelevision(context)) {
+                      final columns = ((constraints.maxWidth - 36) / 150)
+                          .floor()
+                          .clamp(1, 8);
+                      final tileWidth =
+                          (constraints.maxWidth - 36 - (columns - 1) * 14) /
+                          columns;
+                      return RemoteGrid(
+                        key: widget.gridKey,
+                        itemKeys: _items.map((item) => item.id).toList(),
+                        columns: columns,
+                        itemExtent:
+                            DramaTile.extentFor(context, tileWidth - 14) + 14,
+                        controller: _scroll,
+                        padding: const EdgeInsets.fromLTRB(18, 2, 18, 18),
+                        onExitLeft: widget.onExitLeft,
+                        footer: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                          child: Center(
+                            child: _more
+                                ? const CircularProgressIndicator()
+                                : _hasMore
+                                ? RemoteButton(
+                                    label: '继续推荐',
+                                    icon: Icons.auto_awesome_rounded,
+                                    onPressed: () => _load(more: true),
+                                  )
+                                : RemoteButton(
+                                    label: '刷新获取新推荐',
+                                    icon: Icons.refresh_rounded,
+                                    onPressed: () => _load(force: true),
+                                  ),
+                          ),
+                        ),
+                        itemBuilder: (_, index, node, onFocus) {
+                          final drama = _items[index];
+                          return DramaTile(
+                            key: ValueKey(drama.id),
+                            drama: drama,
+                            repository: widget.repository,
+                            focusNode: node,
+                            onFocus: onFocus,
+                            onTap: () => unawaited(
+                              openPlaybackDirectly(
+                                context,
+                                drama: drama,
+                                repository: widget.repository,
+                                store: widget.store,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return RefreshIndicator(
                     onRefresh: () => _load(force: true),
                     child: CustomScrollView(
                       controller: _scroll,
@@ -231,7 +293,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                         ),
                       ],
                     ),
-                  ),
+                  );
+                  },
                 ),
         ),
       ],

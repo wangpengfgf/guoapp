@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models.dart';
 import 'download_preferences.dart';
 import 'episode_browser.dart';
+import 'remote_widgets.dart';
 
 class DownloadSelection {
   const DownloadSelection(this.episodes, this.quality);
@@ -35,6 +36,12 @@ class _DownloadPickerState extends State<DownloadPicker> {
       .toSet();
   late int _quality = widget.preferences.quality;
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ensureTelevisionFocus(context);
+  }
 
   void _select(Iterable<Episode> episodes) {
     final choices = episodes.toList();

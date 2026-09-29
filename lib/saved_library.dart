@@ -19,6 +19,9 @@ class SavedLibrary extends StatefulWidget {
     required this.onOpen,
     required this.onContinue,
     this.onDownload,
+    this.remoteAutofocus = false,
+    this.onExitLeft,
+    this.onExitUp,
   });
 
   final AppRepository repository;
@@ -27,6 +30,9 @@ class SavedLibrary extends StatefulWidget {
   final ValueChanged<Drama> onOpen;
   final ValueChanged<Drama> onContinue;
   final ValueChanged<Drama>? onDownload;
+  final bool remoteAutofocus;
+  final VoidCallback? onExitLeft;
+  final VoidCallback? onExitUp;
 
   @override
   State<SavedLibrary> createState() => _SavedLibraryState();
@@ -255,6 +261,9 @@ class _SavedLibraryState extends State<SavedLibrary> {
                           columns: columns,
                           itemExtent:
                               DramaTile.extentFor(context, tileWidth - 14) + 14,
+                          autofocus: widget.remoteAutofocus,
+                          onExitLeft: widget.onExitLeft,
+                          onExitUp: widget.onExitUp,
                           itemBuilder: (_, index, node, onFocus) => _tile(
                             items[index],
                             focusNode: node,
