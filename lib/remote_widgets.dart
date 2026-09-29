@@ -913,7 +913,9 @@ class TelevisionActionDialog extends StatelessWidget {
           maxHeight: MediaQuery.sizeOf(context).height * .6,
         ),
         child: RemoteList(
-          itemKeys: [for (var index = 0; index <= options.length; index++) '$index'],
+          itemKeys: [
+            for (var index = 0; index <= options.length; index++) '$index',
+          ],
           itemExtent: RemoteListTile.extent,
           padding: EdgeInsets.zero,
           autofocus: true,
