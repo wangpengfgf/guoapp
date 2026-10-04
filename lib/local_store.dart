@@ -606,14 +606,11 @@ class LocalStore extends ChangeNotifier {
       if (idSet.isEmpty || epoch != _epoch) return;
       final entries = Map.of(_history);
       entries.removeWhere((key, _) => idSet.contains(key));
-      await _commit(
-        {
-          _key('history'): jsonEncode(
-            entries.values.map((entry) => entry.toJson()).toList(),
-          ),
-        },
-        clearSyncProgress: idSet,
-      );
+      await _commit({
+        _key('history'): jsonEncode(
+          entries.values.map((entry) => entry.toJson()).toList(),
+        ),
+      }, clearSyncProgress: idSet);
       _loadLibrary();
       _notify();
     });

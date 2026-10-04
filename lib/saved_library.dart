@@ -179,10 +179,7 @@ class _SavedLibraryState extends State<SavedLibrary> {
         : null;
     final actionButton = isSelecting
         ? null
-        : DramaActionButton(
-            drama: drama,
-            onPressed: () => _actions(drama),
-          );
+        : DramaActionButton(drama: drama, onPressed: () => _actions(drama));
     return DramaTile(
       key: ValueKey('saved-${drama.id}'),
       drama: drama,
@@ -317,19 +314,20 @@ class _SavedLibraryState extends State<SavedLibrary> {
           : '${widget.history ? '最近观看' : '我的追剧'} · ${all.length}';
       final allSelected =
           items.isNotEmpty && _selectedIds.containsAll(items.map((e) => e.id));
-      final tvExitDown =
-          inSelection ? () => _tvDeleteFocus.requestFocus() : null;
+      final tvExitDown = inSelection
+          ? () => _tvDeleteFocus.requestFocus()
+          : null;
       final resume = inSelection
           ? null
           : history
-              .where(
-                (entry) =>
-                    ids.contains(entry.drama.id) &&
-                    (!entry.finished ||
-                        entry.drama.episodes <= 0 ||
-                        entry.episode < entry.drama.episodes),
-              )
-              .firstOrNull;
+                .where(
+                  (entry) =>
+                      ids.contains(entry.drama.id) &&
+                      (!entry.finished ||
+                          entry.drama.episodes <= 0 ||
+                          entry.episode < entry.drama.episodes),
+                )
+                .firstOrNull;
       final header = [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
