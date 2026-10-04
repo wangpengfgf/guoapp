@@ -604,8 +604,8 @@ class LocalStore extends ChangeNotifier {
     final idSet = ids.where((id) => watched(id) != null).toSet();
     return _queue(() async {
       if (idSet.isEmpty || epoch != _epoch) return;
-      final entries = Map.of(_history)
-        ..removeWhere((key, _) => idSet.contains(key));
+      final entries = Map.of(_history);
+      entries.removeWhere((key, _) => idSet.contains(key));
       await _commit(
         {
           _key('history'): jsonEncode(

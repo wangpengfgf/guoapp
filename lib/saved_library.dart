@@ -171,6 +171,18 @@ class _SavedLibraryState extends State<SavedLibrary> {
         : '${state.label}${state.hasUpdates ? ' · ${state.updateLabel}' : ''}';
     final isSelecting = widget.history && _selecting;
     final isSelected = isSelecting ? _selectedIds.contains(drama.id) : null;
+    final onTileTap = isSelecting
+        ? () => _toggleSelection(drama.id)
+        : () => widget.onOpen(drama);
+    final onLongPress = widget.history && !_selecting
+        ? () => _enterSelection(drama.id)
+        : null;
+    final actionButton = isSelecting
+        ? null
+        : DramaActionButton(
+            drama: drama,
+            onPressed: () => _actions(drama),
+          );
     return DramaTile(
       key: ValueKey('saved-${drama.id}'),
       drama: drama,
@@ -178,19 +190,10 @@ class _SavedLibraryState extends State<SavedLibrary> {
       focusNode: focusNode,
       onFocus: onFocus,
       selected: isSelected,
-      onTap: isSelecting
-          ? () => _toggleSelection(drama.id)
-          : () => widget.onOpen(drama),
+      onTap: onTileTap,
       onMore: isSelecting ? null : () => _actions(drama),
-      onLongPress: (widget.history && !_selecting)
-          ? () => _enterSelection(drama.id)
-          : null,
-      actions: isSelecting
-          ? null
-          : DramaActionButton(
-              drama: drama,
-              onPressed: () => _actions(drama),
-            ),
+      onLongPress: onLongPress,
+      actions: actionButton,
       badge: badge,
       subtitle: watched == null
           ? SourceSite.byId(drama.source).name
@@ -309,6 +312,13 @@ class _SavedLibraryState extends State<SavedLibrary> {
       }).toList();
       final ids = items.map((drama) => drama.id).toSet();
       final inSelection = widget.history && _selecting;
+      final title = inSelection
+          ? '已选择 ${_selectedIds.length} 项'
+          : '${widget.history ? '最近观看' : '我的追剧'} · ${all.length}';
+      final allSelected =
+          items.isNotEmpty && _selectedIds.containsAll(items.map((e) => e.id));
+      final tvExitDown =
+          inSelection ? () => _tvDeleteFocus.requestFocus() : null;
       final resume = inSelection
           ? null
           : history
@@ -327,9 +337,7 @@ class _SavedLibraryState extends State<SavedLibrary> {
             children: [
               Expanded(
                 child: Text(
-                  inSelection
-                      ? '已选择 ${_selectedIds.length} 项'
-                      : '${widget.history ? '最近观看' : '我的追剧'} · ${all.length}',
+                  title,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
@@ -339,12 +347,7 @@ class _SavedLibraryState extends State<SavedLibrary> {
                   onPressed: items.isEmpty
                       ? null
                       : () => _toggleSelectAll(items),
-                  child: Text(
-                    items.isNotEmpty &&
-                            _selectedIds.containsAll(items.map((e) => e.id))
-                        ? '取消全选'
-                        : '全选',
-                  ),
+                  child: Text(allSelected ? '取消全选' : '全选'),
                 ),
                 TextButton(
                   key: const ValueKey('history-cancel-selection'),
@@ -476,9 +479,7 @@ class _SavedLibraryState extends State<SavedLibrary> {
                           autofocus: widget.remoteAutofocus,
                           onExitLeft: widget.onExitLeft,
                           onExitUp: widget.onExitUp,
-                          onExitDown: inSelection
-                              ? () => _tvDeleteFocus.requestFocus()
-                              : null,
+                          onExitDown: tvExitDown,
                           itemBuilder: (_, index, node, onFocus) => _tile(
                             items[index],
                             focusNode: node,
@@ -517,12 +518,13 @@ class _SavedLibraryState extends State<SavedLibrary> {
         },
       );
       if (!inSelection) return content;
+      final bottomBar = AppLayout.isTelevision(context)
+          ? _tvSelectionBar()
+          : _selectionBar();
       final body = Column(
         children: [
           Expanded(child: content),
-          AppLayout.isTelevision(context)
-              ? _tvSelectionBar()
-              : _selectionBar(),
+          bottomBar,
         ],
       );
       return PopScope(
