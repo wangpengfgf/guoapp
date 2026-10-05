@@ -1,5 +1,4 @@
 import 'package:duanju_app/catalog_browser.dart';
-import 'package:duanju_app/core_bridge.dart';
 import 'package:duanju_app/local_store.dart';
 import 'package:duanju_app/main.dart';
 import 'package:duanju_app/models.dart';
