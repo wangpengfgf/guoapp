@@ -36,7 +36,7 @@ Future<void> openPlaybackDirectly(
     final watched = store.watched(mergedDrama.id);
     final index = resumeEpisodeIndex(merged.episodes, watched);
     final episode = merged.episodes[index];
-    if (episode.vip && mergedDrama.source != SourceSite.dsd.id) {
+    if (episode.vip) {
       final accepted = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -151,7 +151,7 @@ class _PlaybackLaunchScreenState extends State<PlaybackLaunchScreen> {
       final watched = widget.store.watched(drama.id);
       final index = resumeEpisodeIndex(merged.episodes, watched);
       final episode = merged.episodes[index];
-      if (episode.vip && drama.source != SourceSite.dsd.id) {
+      if (episode.vip) {
         if (!mounted) return;
         final accepted = await showDialog<bool>(
           context: context,

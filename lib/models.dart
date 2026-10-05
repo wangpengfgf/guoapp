@@ -8,8 +8,7 @@ class SourceSite {
   final String name;
   final String description;
   bool get onlineSearch => id == 'hongguo' || pagedSearch;
-  bool get pagedSearch =>
-      id == 'huangju' || id == 'yeguo' || id == 'dsd' || duanjuPaged;
+  bool get pagedSearch => duanjuPaged;
   bool get duanjuPaged => const {
     'yaguo',
     'guanguo',
@@ -21,20 +20,10 @@ class SourceSite {
     'wuguo',
   }.contains(id);
   bool get searchSuggestions => id == 'hongguo';
-  String get groupId => switch (id) {
-    'huangguo-video' || 'huangguoai' || 'cloudfront' => 'huangguo',
-    _ => id,
-  };
-  String get groupName => groupId == 'huangguo' ? '黄果' : name;
-  String get entryName => switch (id) {
-    'huangguo-video' => '视频',
-    'huangguoai' => 'AI',
-    'cloudfront' => '旧版',
-    _ => name,
-  };
+  String get groupId => id;
+  String get groupName => name;
 
   static const hongguo = SourceSite('hongguo', '红果', '短剧 · 漫剧 · AI 剧');
-  static const dsd = SourceSite('dsd', '帝果', '分类视频 · 在线搜索');
   static const duanjuValues = [
     SourceSite('yaguo', '芽果', '星芽短剧 · 登录接口'),
     SourceSite('maoguo', '猫果', '七猫短剧 · 签名接口'),
@@ -49,28 +38,8 @@ class SourceSite {
     SourceSite('piguo', '皮果', 'PTT 短剧 · 网页目录'),
     SourceSite('wuguo', '伍果', '五五短剧 · 网页目录'),
   ];
-  static const knownValues = [
-    hongguo,
-    SourceSite('huangdou', '黄豆', '精选短剧'),
-    SourceSite('huangju', '剧果', '热门 · 最新 · 分类短剧'),
-    SourceSite('yeguo', '野果', '分类短剧 · 在线搜索'),
-    dsd,
-    SourceSite('huangguo-video', '黄果视频', '视频剧集'),
-    SourceSite('huangguoai', '黄果 AI', 'AI 短剧'),
-    SourceSite('cloudfront', '黄果旧版', '旧 API 剧库'),
-    ...duanjuValues,
-  ];
-  static const allValues = [
-    hongguo,
-    SourceSite('huangdou', '黄豆', '精选短剧'),
-    SourceSite('huangju', '剧果', '热门 · 最新 · 分类短剧'),
-    SourceSite('yeguo', '野果', '分类短剧 · 在线搜索'),
-    dsd,
-    SourceSite('huangguo-video', '黄果视频', '视频剧集'),
-    SourceSite('huangguoai', '黄果 AI', 'AI 短剧'),
-    SourceSite('cloudfront', '黄果旧版', '旧 API 剧库'),
-    ...duanjuValues,
-  ];
+  static const knownValues = [hongguo, ...duanjuValues];
+  static const allValues = [hongguo, ...duanjuValues];
   static const values = allSourcesEnabled ? knownValues : [hongguo];
   static bool isAvailable(String id) => values.any((site) => site.id == id);
   static bool isKnown(String id) => allValues.any((site) => site.id == id);
@@ -161,9 +130,7 @@ class Drama {
     category: json['category'] as String? ?? '',
     vip: json['vip'] == true
         ? true
-        : json['vip'] == false &&
-              (json['source'] != 'huangdou' ||
-                  intValue(json['metadataSchema']) >= 1)
+        : json['vip'] == false
         ? false
         : null,
     heat: json['heat']?.toString() ?? '',

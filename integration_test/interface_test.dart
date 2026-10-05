@@ -85,17 +85,13 @@ void main() {
       expect(find.byTooltip('更新当前站源'), findsOneWidget);
 
       if (allSourcesEnabled) {
-        await source('黄豆');
-        expect(find.byTooltip('VIP：隐藏'), findsOneWidget);
-        expect(find.text('会员合成剧'), findsNothing);
-        await capture('interface-huangdou-vip');
-        for (final name in ['黄果', '红果']) {
+        for (final name in ['芽果', '红果']) {
           await source(name);
           expect(find.textContaining('VIP：'), findsNothing);
           expect(find.text('会员合成剧'), findsWidgets);
         }
       } else {
-        expect(find.text('黄豆'), findsNothing);
+        expect(find.text('芽果'), findsNothing);
         expect(find.text('红果'), findsOneWidget);
       }
       await store.setThemeMode('dark');

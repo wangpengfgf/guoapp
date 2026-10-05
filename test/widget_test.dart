@@ -31,18 +31,16 @@ void main() {
       if (allSourcesEnabled) {
         await tester.tap(find.byKey(const ValueKey('source-switch')));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('黄豆'));
+        await tester.tap(find.text('芽果').last);
         await tester.pumpAndSettle();
-        expect(find.text('会员测试剧'), findsNothing);
-        expect(find.byTooltip('VIP：隐藏'), findsOneWidget);
-        await tester.tap(find.byTooltip('VIP：隐藏'));
-        await tester.pumpAndSettle();
-        expect(find.byTooltip('VIP：显示'), findsOneWidget);
         expect(find.text('会员测试剧'), findsOneWidget);
-        await tester.tap(find.byTooltip('VIP：显示'));
+        expect(find.textContaining('VIP：'), findsNothing);
+        await tester.tap(find.byKey(const ValueKey('source-switch')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('红果').last);
         await tester.pumpAndSettle();
       } else {
-        expect(find.text('黄豆'), findsNothing);
+        expect(find.text('芽果'), findsNothing);
       }
       expect(find.text('会员测试剧'), findsNothing);
       await tester.tap(find.text('测试短剧'));

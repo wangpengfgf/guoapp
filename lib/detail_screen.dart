@@ -240,8 +240,7 @@ class _DetailScreenState extends State<DetailScreen> {
         !widget.store.allowsSource(detail.drama.source)) {
       return;
     }
-    if (detail.episodes[index].vip &&
-        detail.drama.source != SourceSite.dsd.id) {
+    if (detail.episodes[index].vip) {
       final accepted = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -688,18 +687,6 @@ class _DetailScreenState extends State<DetailScreen> {
                       child: Text(
                         drama.category,
                         style: TextStyle(color: colors.onSurfaceVariant),
-                      ),
-                    ),
-                  if (drama.source == 'huangdou')
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        drama.vipStatus == null
-                            ? 'VIP 状态待补齐'
-                            : drama.vip
-                            ? 'VIP 内容'
-                            : '免费内容',
-                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
                 ],

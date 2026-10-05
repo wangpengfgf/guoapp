@@ -20,7 +20,6 @@ import 'lan_screen.dart';
 import 'models.dart';
 import 'remote_widgets.dart';
 import 'widgets.dart';
-import 'vip_icon.dart';
 import 'settings_screen.dart';
 import 'profiles_screen.dart';
 import 'search_input.dart';
@@ -740,10 +739,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  bool get _supportsVipFilter =>
-      _group.sources.any((source) => source.id == 'huangdou');
-  bool get _hideVip => _supportsVipFilter && widget.store.hideVip;
-
   List<Drama> get _visible {
     final query = _search.text.trim().toLowerCase();
     return sortCatalog(
@@ -751,9 +746,6 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!widget.store.allowsSource(drama.source)) return false;
         if (_category.startsWith('local:') &&
             categoryName(drama.category) != _category.substring(6)) {
-          return false;
-        }
-        if (_hideVip && drama.source == 'huangdou' && drama.vip) {
           return false;
         }
         return _onlineSearch ||
@@ -1212,20 +1204,6 @@ class _HomeScreenState extends State<HomeScreen> {
               : null,
           onCategory: _changeCategory,
           onRetry: () => _loadCategories(force: true),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_supportsVipFilter)
-                IconButton(
-                  tooltip: widget.store.hideVip ? 'VIP：隐藏' : 'VIP：显示',
-                  onPressed: () => saveUserChange(
-                    context,
-                    () => widget.store.setHideVip(!widget.store.hideVip),
-                  ),
-                  icon: VipIcon(hidden: widget.store.hideVip),
-                ),
-            ],
-          ),
         ),
         if (_showRecommendations)
           Expanded(
@@ -1276,9 +1254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   : items.isEmpty
                   ? StatusPanel(
                       title: '没有找到匹配的短剧',
-                      message: _hideVip
-                          ? '可以换个搜索词，或显示 VIP 内容。'
-                          : widget.store.sources.length > 1
+                      message: widget.store.sources.length > 1
                           ? '可以换个搜索词或切换站源。'
                           : '可以换个搜索词，或刷新后重试。',
                       onRetry:

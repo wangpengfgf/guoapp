@@ -178,11 +178,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
           ),
         )
         .where(
-          (item) =>
-              widget.store.allowsSource(item.drama.source) &&
-              !(item.drama.source == 'huangdou' &&
-                  widget.store.hideVip &&
-                  item.drama.vip),
+          (item) => widget.store.allowsSource(item.drama.source),
         )
         .toList();
     return Scaffold(

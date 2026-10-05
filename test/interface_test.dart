@@ -84,9 +84,7 @@ void main() {
     },
   );
 
-  testWidgets('only Huangdou exposes and applies the persistent VIP filter', (
-    tester,
-  ) async {
+  testWidgets('no station source exposes a VIP filter', (tester) async {
     viewport(tester, const Size(390, 844));
     final repository = InterfaceRepository();
     final store = await localStore();
@@ -102,31 +100,14 @@ void main() {
 
     for (final group in SourceGroup.fromSources(SourceSite.values)) {
       await select(group.name);
-      if (group.id == 'huangdou') {
-        expect(find.text('会员合成剧'), findsNothing);
-        await tester.tap(find.byTooltip('VIP：隐藏'));
-        await tester.pumpAndSettle();
-        expect(find.text('会员合成剧'), findsOneWidget);
-      } else {
-        expect(find.byTooltip('VIP：隐藏'), findsNothing);
-        expect(find.byTooltip('VIP：显示'), findsNothing);
-        expect(find.text('会员合成剧'), findsWidgets);
-      }
+      expect(find.textContaining('VIP：'), findsNothing);
+      expect(find.text('会员合成剧'), findsWidgets);
     }
     if (!allSourcesEnabled) {
       for (final source in SourceSite.knownValues.skip(1)) {
         expect(find.widgetWithText(ChoiceChip, source.name), findsNothing);
       }
-      return;
     }
-    await select('黄豆');
-    expect(find.byTooltip('VIP：显示'), findsOneWidget);
-    await tester.tap(find.byTooltip('VIP：显示'));
-    await tester.pumpAndSettle();
-    expect(store.hideVip, isTrue);
-    await select('红果');
-    expect(find.text('会员合成剧'), findsOneWidget);
-    expect(find.textContaining('VIP：'), findsNothing);
   });
 
   for (final layout in [

@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:duanju_app/app_build.dart';
 import 'package:duanju_app/catalog_browser.dart';
 import 'package:duanju_app/core_bridge.dart';
 import 'package:duanju_app/local_store.dart';
@@ -16,9 +13,6 @@ import 'fixtures.dart';
 
 class CategoryRepository extends FixtureRepository {
   final categoryRequests = <String>[];
-  Completer<CatalogPage>? pendingComic;
-  bool failLegacy = false;
-  bool paginate = false;
   final rankRequests = <String>[];
 
   @override
@@ -38,16 +32,6 @@ class CategoryRepository extends FixtureRepository {
       CatalogCategory('comic_series', '漫剧'),
       CatalogCategory('ai_series', 'AI 剧'),
     ],
-    'huangguo-video' => const [CatalogCategory.all, CatalogCategory('2', '短片')],
-    'huangguoai' => const [
-      CatalogCategory.all,
-      CatalogCategory('ai-duanju', 'AI 短剧'),
-      CatalogCategory('ai-manju', 'AI 漫剧'),
-    ],
-    'cloudfront' => const [
-      CatalogCategory.all,
-      CatalogCategory('old-short', 'AI成人短剧'),
-    ],
     _ => const [CatalogCategory.all],
   };
 
@@ -60,22 +44,14 @@ class CategoryRepository extends FixtureRepository {
     bool force = false,
   }) async {
     categoryRequests.add('$source|$category|$page');
-    if (source == 'cloudfront' && failLegacy) throw AppFailure('合成入口失败');
-    if (category == 'ai-manju' && pendingComic != null) {
-      return pendingComic!.future;
-    }
-    return CatalogPage(
-      [
-        Drama(
-          id: '$source:$category:$page',
-          source: source,
-          title: '$source · ${category.isEmpty ? '全部' : category}',
-          category: source == 'hongguo' ? '异能' : '',
-        ),
-      ],
-      page: page,
-      hasMore: paginate && source == 'huangguo-video' && page == 1,
-    );
+    return CatalogPage([
+      Drama(
+        id: '$source:$category:$page',
+        source: source,
+        title: '$source · ${category.isEmpty ? '全部' : category}',
+        category: source == 'hongguo' ? '异能' : '',
+      ),
+    ], page: page);
   }
 
   @override
@@ -160,51 +136,6 @@ void main() {
     });
   }
 
-  testWidgets(
-    'one Huangguo source merges catalogs and categories and rejects stale replies',
-    (tester) async {
-      final repository = CategoryRepository();
-      await mount(tester, repository, source: 'huangguoai');
-      expect(find.text('黄果'), findsOneWidget);
-      expect(find.text('入口'), findsNothing);
-      expect(find.text('旧版'), findsNothing);
-      expect(
-        repository.categoryRequests.toSet(),
-        containsAll(['huangguo-video||1', 'huangguoai||1', 'cloudfront||1']),
-      );
-      expect(find.text('AI成人短剧'), findsNothing);
-      expect(find.text('AI 短剧'), findsOneWidget);
-      Future<void> choose(String name) async {
-        final chip = find.widgetWithText(ChoiceChip, name);
-        await tester.ensureVisible(chip);
-        await tester.tap(chip);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
-      }
-
-      final pending = Completer<CatalogPage>();
-      repository.pendingComic = pending;
-      await choose('AI 漫剧');
-      await choose('AI 短剧');
-      await tester.pumpAndSettle();
-      pending.complete(
-        CatalogPage(const [
-          Drama(id: 'huangguoai:stale', source: 'huangguoai', title: '过期分类结果'),
-        ]),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('过期分类结果'), findsNothing);
-      expect(
-        repository.categoryRequests,
-        containsAll(['huangguoai|ai-duanju|1', 'cloudfront|old-short|1']),
-      );
-      expect(find.text('huangguoai · ai-duanju'), findsOneWidget);
-      expect(find.text('cloudfront · old-short'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-    skip: !allSourcesEnabled,
-  );
-
   test(
     'remote content types never hide fine categories from cached pages',
     () async {
@@ -233,34 +164,6 @@ void main() {
       );
       final local = await browser.load(group, category: 'local:都市');
       expect(local.items.map((drama) => drama.id), contains('hongguo:old1'));
-    },
-  );
-
-  test(
-    'group pagination retries failed member without skipping or reloading exhausted members',
-    () async {
-      final repository = CategoryRepository()
-        ..failLegacy = true
-        ..paginate = true;
-      final browser = CatalogBrowser(repository);
-      final group = SourceGroup.fromSources(
-        SourceSite.knownValues,
-      ).firstWhere((group) => group.id == 'huangguo');
-      final first = await browser.load(group);
-      expect(first.items.length, 2);
-      expect(first.warning, '合成入口失败');
-      repository.failLegacy = false;
-      final next = await browser.load(group, more: true);
-      expect(
-        repository.categoryRequests
-            .where((request) => request == 'cloudfront||1')
-            .length,
-        2,
-      );
-      expect(repository.categoryRequests, contains('huangguo-video||2'));
-      expect(repository.categoryRequests, isNot(contains('huangguoai||2')));
-      expect(next.items.length, 4);
-      expect(next.warning, isEmpty);
     },
   );
 

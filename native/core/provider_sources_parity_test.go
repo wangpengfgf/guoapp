@@ -196,57 +196,6 @@ func TestYeguoCatalogAcceptsSourcePageSize(t *testing.T) {
 	}
 }
 
-func TestProviderCatalogRankingsUseProviderCatalogPages(t *testing.T) {
-	t.Run("huangju", func(t *testing.T) {
-		d := providerParityDownloader(t, func(request *http.Request, form url.Values) (*http.Response, error) {
-			if request.URL.Path == "/auth/guest" {
-				return sourceFixtureResponse(request, http.StatusOK, `{"token":"guest-token"}`), nil
-			}
-			if request.URL.Path != "/dramas" || request.URL.Query().Get("page") != "2" || request.URL.Query().Get("sort") != "hot" {
-				t.Fatalf("unexpected huangju ranking request: %s", request.URL.String())
-			}
-			return sourceFixtureResponse(request, http.StatusOK, `{"items":[{"id":"201","slug":"rank-a","title":"剧果榜一"},{"id":"202","slug":"rank-b","title":"剧果榜二"}],"page":2,"pageSize":20,"total":22}`), nil
-		})
-		board, _ := findRankingBoard("huangju-hot")
-		page, err := d.fetchCatalogRankingPage(context.Background(), board, 2)
-		if err != nil || len(page.Items) != 2 || page.Items[0].Rank != 21 || page.Items[0].Drama.Cover != nil {
-			t.Fatalf("huangju catalog ranking failed: %+v %v", page, err)
-		}
-	})
-	t.Run("yeguo", func(t *testing.T) {
-		d := providerParityDownloader(t, func(request *http.Request, form url.Values) (*http.Response, error) {
-			if request.URL.Path != "/api/theater/exploreList" || request.Method != http.MethodPost || form.Get("page") != "1" {
-				t.Fatalf("unexpected yeguo ranking request: %s %s %v", request.Method, request.URL.String(), form)
-			}
-			return sourceFixtureResponse(request, http.StatusOK, `{"status":"1","data":{"list":[{"video_id":"301","title":"野果榜一","episode_count":"10","serialize_status":"2"}],"page":1,"limit":20,"total":21,"has_more":"1"}}`), nil
-		})
-		d.yeguoClient().access = &yeguoAccess{base: "https://api.yeguo.test", identifier: "fixture-trace", loadedAt: time.Now()}
-		board, _ := findRankingBoard("yeguo-recommend")
-		page, err := d.fetchCatalogRankingPage(context.Background(), board, 1)
-		if err != nil || len(page.Items) != 1 || !page.HasMore || page.Items[0].Drama.ID != "yeguo:301" || page.Items[0].Drama.Cover != nil {
-			t.Fatalf("yeguo catalog ranking failed: %+v %v", page, err)
-		}
-	})
-	t.Run("dsd", func(t *testing.T) {
-		d := providerParityDownloader(t, func(request *http.Request, form url.Values) (*http.Response, error) {
-			switch request.URL.Path {
-			case "/":
-				return sourceFixtureResponse(request, http.StatusOK, `<a href="/index.php/vod/type/id/9.html">帝果分类</a>`), nil
-			case "/index.php/vod/type/id/9/page/1.html":
-				return sourceFixtureResponse(request, http.StatusOK, `<main class="lists"><a class="video-item" href="/index.php/vod/play/id/456/sid/1/nid/1.html"><span class="video-title">帝果榜一</span></a></main>`), nil
-			default:
-				t.Fatalf("unexpected dsd ranking request: %s", request.URL.String())
-			}
-			return nil, nil
-		})
-		board, _ := findRankingBoard("dsd-catalog")
-		page, err := d.fetchCatalogRankingPage(context.Background(), board, 1)
-		if err != nil || len(page.Items) != 1 || page.HasMore || page.Items[0].Drama.ID != "dsd:456" || page.Items[0].Drama.Cover != nil {
-			t.Fatalf("dsd catalog ranking failed: %+v %v", page, err)
-		}
-	})
-}
-
 func TestHuangjuPlaybackUsesSignedCookiesForPlaylist(t *testing.T) {
 	var sawCookie bool
 	var mediaURL string

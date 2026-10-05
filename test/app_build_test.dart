@@ -15,20 +15,25 @@ void main() {
   const red = FixtureRepository.free;
   const other = FixtureRepository.vip;
 
-  test('edition sources include DSD only in the all-source build', () async {
-    SharedPreferences.setMockInitialValues({'source': 'huangdou'});
+  test('edition sources exclude the removed legacy station sources', () async {
+    SharedPreferences.setMockInitialValues({'source': 'yaguo'});
     final store = LocalStore(await SharedPreferences.getInstance());
     expect(appSlug, allSourcesEnabled ? 'zhenguojian' : 'hongguojian');
-    expect(store.sources.length, allSourcesEnabled ? 8 : 1);
-    expect(
-      SourceSite.values.any((source) => source.id == 'dsd'),
-      allSourcesEnabled,
-    );
-    expect(SourceSite.isAvailable('dsd'), allSourcesEnabled);
-    expect(SourceSite.isKnown('dsd'), isTrue);
-    expect(SourceSite.byId('dsd').name, '帝果');
-    expect(store.allowsSource('dsd'), isFalse);
-    expect(store.source, allSourcesEnabled ? 'huangdou' : 'hongguo');
+    expect(store.sources.length, allSourcesEnabled ? 13 : 1);
+    for (final id in const [
+      'dsd',
+      'huangdou',
+      'huangju',
+      'yeguo',
+      'huangguo-video',
+      'huangguoai',
+      'cloudfront',
+    ]) {
+      expect(SourceSite.values.any((source) => source.id == id), isFalse);
+      expect(SourceSite.isAvailable(id), isFalse);
+      expect(SourceSite.isKnown(id), isFalse);
+    }
+    expect(store.source, allSourcesEnabled ? 'yaguo' : 'hongguo');
     store.dispose();
   });
 

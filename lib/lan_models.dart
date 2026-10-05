@@ -80,13 +80,7 @@ class LanConnection {
   bool autoSync;
 }
 
-const lanLegacySources = {
-  'hongguo',
-  'huangdou',
-  'huangguo-video',
-  'huangguoai',
-  'cloudfront',
-};
+const lanLegacySources = {'hongguo'};
 
 Set<String> lanSources(Object? value, {bool advertised = false}) {
   if (value is! List ||

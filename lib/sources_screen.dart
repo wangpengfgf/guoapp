@@ -196,29 +196,7 @@ class _SourcesScreenState extends State<SourcesScreen> {
                       padding: EdgeInsets.all(24),
                       child: Text('当前用户没有可用站源'),
                     ),
-                  for (final group in SourceGroup.fromSources(sources))
-                    if (group.id == 'huangguo')
-                      Card(
-                        clipBehavior: Clip.antiAlias,
-                        child: ExpansionTile(
-                          key: const PageStorageKey('source-group-huangguo'),
-                          initiallyExpanded: group.sources.any(
-                            (source) => source.id == widget.initialSource,
-                          ),
-                          leading: const Icon(Icons.hub_outlined),
-                          title: const Text('黄果'),
-                          subtitle: Text(
-                            '${group.sources.length} 个入口 · ${group.sources.fold<int>(0, (count, source) => count + (_statuses[source.id]?.count ?? 0))} 部',
-                          ),
-                          childrenPadding: const EdgeInsets.all(8),
-                          children: [
-                            for (final source in group.sources)
-                              _sourceCard(source),
-                          ],
-                        ),
-                      )
-                    else
-                      for (final source in group.sources) _sourceCard(source),
+                  for (final source in sources) _sourceCard(source),
                 ],
               ),
             ),
@@ -300,12 +278,6 @@ class _SourcesScreenState extends State<SourcesScreen> {
                       child: const Text('继续加载一页'),
                     ),
                     const PopupMenuItem(value: 'metadata', child: Text('补齐资料')),
-                    if (source.id == 'huangdou')
-                      PopupMenuItem(
-                        value: 'vipMetadata',
-                        enabled: (status?.unknownVip ?? 0) > 0,
-                        child: Text('补齐 VIP 资料（${status?.unknownVip ?? 0} 部）'),
-                      ),
                     const PopupMenuItem(
                       value: 'checkCatalog',
                       child: Text('仅检测目录'),

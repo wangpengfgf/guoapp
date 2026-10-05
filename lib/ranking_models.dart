@@ -17,17 +17,6 @@ class RankingBoard {
     'hongguo-real' ||
     'hongguo-comic' ||
     'hongguo-ai' => 'hongguo',
-    'huangdou-all' ||
-    'huangdou-mogai' ||
-    'huangdou-search' ||
-    'huangdou-favorite' ||
-    'huangdou-finish' => 'huangdou',
-    'huangguo-hot' ||
-    'huangguo-recommend' ||
-    'huangguo-potential' => 'huangguoai',
-    'huangju-hot' || 'huangju-new' => 'huangju',
-    'yeguo-recommend' => 'yeguo',
-    'dsd-catalog' => 'dsd',
     _ => '',
   };
   factory RankingBoard.fromJson(Map<String, dynamic> json) => RankingBoard(

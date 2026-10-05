@@ -88,7 +88,7 @@ func splitProviderDramaID(id string) (source, sourceID string, ok bool) {
 
 func isHuangguoProviderSource(source string) bool {
 	switch canonicalProviderSource(source) {
-	case sourceHuangguoAI, sourceHuangguoVideo, sourceHuangdou, sourceHongguo, sourceHuangju, sourceYeguo, sourceDSD, sourceCloudFront:
+	case sourceHongguo:
 		return true
 	default:
 		return isDuanjuProviderSource(source)
@@ -98,22 +98,8 @@ func isHuangguoProviderSource(source string) bool {
 func canonicalProviderSource(source string) string {
 	key := strings.ToLower(strings.TrimSpace(source))
 	switch key {
-	case "huangguo", "huangguoai", "huangguoai.com":
-		return sourceHuangguoAI
-	case "huangguo-video", "huangguo.video":
-		return sourceHuangguoVideo
-	case "huangdou", "tideember.cc", "xqjurgek.top":
-		return sourceHuangdou
 	case "hongguo", "hongguoduanju.com":
 		return sourceHongguo
-	case "huangju", "huangju.net", "api.huangju.net":
-		return sourceHuangju
-	case "yeguo", "ygdj7.com", "www.ygdj7.com", "analyze.buxefaex.cc", "delta.ygrwdsgt.cc", "yeguodj.com", "www.yeguodj.com":
-		return sourceYeguo
-	case "dsd", "dsd.com.se", "www.dsd.com.se":
-		return sourceDSD
-	case "cloudfront":
-		return sourceCloudFront
 	}
 	if canonical, found := duanjuSourceAliases[key]; found {
 		return canonical
