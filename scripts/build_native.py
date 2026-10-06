@@ -11,6 +11,10 @@ root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--platform', choices=['android', 'windows', 'darwin'], required=True)
 parser.add_argument('--abi', action='append', choices=['arm64-v8a', 'armeabi-v7a', 'x86_64'])
+parser.add_argument('--jni-root', default='android/app/src/main/jniLibs',
+                    help='Android 原生库输出根目录（相对项目根）')
+parser.add_argument('--api-level', type=int, default=26,
+                    help='Android 原生库编译目标 API 级别')
 add_variant_argument(parser)
 options = parser.parse_args()
 variant = BuildVariant(options.all_sources)
@@ -48,17 +52,18 @@ if options.platform == 'android':
     ndk = Path(os.environ.get('ANDROID_NDK_HOME', Path(sdk) / 'ndk' / '28.2.13676358'))
     host = {'Darwin': 'darwin-x86_64', 'Linux': 'linux-x86_64', 'Windows': 'windows-x86_64'}[platform.system()]
     compilers = ndk / 'toolchains' / 'llvm' / 'prebuilt' / host / 'bin'
+    api = options.api_level
     mappings = {
-        'arm64-v8a': ('arm64', 'aarch64-linux-android26-clang'),
-        'armeabi-v7a': ('arm', 'armv7a-linux-androideabi26-clang'),
-        'x86_64': ('amd64', 'x86_64-linux-android26-clang'),
+        'arm64-v8a': ('arm64', f'aarch64-linux-android{api}-clang'),
+        'armeabi-v7a': ('arm', f'armv7a-linux-androideabi{api}-clang'),
+        'x86_64': ('amd64', f'x86_64-linux-android{api}-clang'),
     }
     for abi in options.abi or list(mappings):
         architecture, name = mappings[abi]
         compiler = compilers / (name + ('.cmd' if platform.system() == 'Windows' else ''))
         if not compiler.exists():
             raise SystemExit('缺少 Android NDK 编译器：' + str(compiler))
-        output = root / 'android' / 'app' / 'src' / 'main' / 'jniLibs' / abi / 'libduanju_core.so'
+        output = root / options.jni_root / abi / 'libduanju_core.so'
         extra = {'CGO_LDFLAGS': '-Wl,-z,max-page-size=16384'}
         if architecture == 'arm':
             extra['GOARM'] = '7'

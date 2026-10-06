@@ -6,12 +6,14 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--clean', action='store_true')
+parser.add_argument('--project', default='android',
+                    help='Android 工程目录（相对项目根），默认 android')
 options = parser.parse_args()
 runner_temp = os.environ.get('RUNNER_TEMP')
 if not runner_temp:
     raise SystemExit('此脚本用于 GitHub Actions；本机构建请配置 android/key.properties。')
 key_file = Path(runner_temp) / 'duanju-release.jks'
-properties_file = root / 'android' / 'key.properties'
+properties_file = root / options.project / 'key.properties'
 if options.clean:
     if key_file.exists():
         key_file.unlink()

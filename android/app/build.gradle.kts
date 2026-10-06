@@ -32,7 +32,7 @@ android {
 
     defaultConfig {
         applicationId = "com.duanju.duanju_app"
-        minSdk = 26
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

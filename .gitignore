@@ -6,6 +6,9 @@ dist/
 android/.gradle/
 android/local.properties
 android/app/src/main/jniLibs/
+android-native/.gradle/
+android-native/local.properties
+android-native/app/src/main/jniLibs/
 native/build/
 windows/runner/duanju_core.dll
 *.log

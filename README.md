@@ -679,6 +679,29 @@ keyAlias=zhenguojian
 keyPassword=你的密码
 ~~~
 
+### Android 6 双端播放器（android-native）
+
+仓库新增独立的 Android 原生播放器工程 `android-native`，用于在 Android 6.0（API 23）及以上同时覆盖手机与电视：界面使用 Jetpack Compose，播放使用 [Media3 / ExoPlayer](https://github.com/androidx/media)（Apache-2.0，最低 API 21），站源直接复用 `native/` 的 Go 核心，通过 JNI 调用与 Flutter 版一致的 `DuanjuRequest` JSON 协议，不重写站源逻辑。
+
+| 项目 | 说明 |
+| --- | --- |
+| 应用名 / 包名 | 短剧TV / `com.duanju.tv` |
+| 系统要求 | Android 6.0（API 23）及以上 |
+| 设备 | 手机与 Android TV 共用同一 APK；同时声明触摸屏与 Leanback 入口，海报卡片与选集按钮支持遥控方向键聚焦 |
+| 站源 | 与真果鉴一致的 13 个站源（红果，以及芽果、猫果、饭果、观果、河果、星果、花果、牛果、网果、发果、皮果、伍果），核心以 `--all-sources` 编译 |
+| 功能范围 | 站源浏览、分类、搜索、收藏、观看记录与在线播放；不含 FFmpeg 转码、下载合并、画质增强、局域网与弹幕 |
+
+本地构建：
+
+~~~sh
+python3 scripts/build_player.py
+python3 scripts/build_player.py --abi arm64-v8a --skip-gradle
+~~~
+
+脚本先用 `scripts/build_native.py --platform android --api-level 23 --all-sources` 生成各 ABI 的 `libduanju_core.so` 到 `android-native/app/src/main/jniLibs/`，再调用 Gradle 打包 `:app:assembleRelease`，APK 输出到 `dist/android-native/`。需要 Go 1.24.1+、JDK 17、Android SDK 35 与 NDK `28.2.13676358`。签名沿用上面的 `ANDROID_*` Secrets，未配置时使用 debug 签名。
+
+推送 `main` / `master`、`player-v*` 标签，或手动运行 **Build short-drama TV player** 会触发 `.github/workflows/player.yml`；标签构建会把 APK 发布到对应 Release。该工程为未验证开发快照，尚未进行真机安装与播放验收。
+
 ## 开发与构建
 
 Flutter `3.47.4`、Dart `3.12+`、Go `1.24.1+`、Python `3.10+`。Android 需要 JDK 17、SDK 36、NDK `28.2.13676358`；Windows 需要 Visual Studio 的 C++ 桌面组件及 MinGW-w64 x64；iOS 需要 macOS、完整 Xcode 和 CocoaPods。
